@@ -54,11 +54,13 @@ int ReadFile(char* dest) {
 
 // descifra un texto dado una llave
 void decrypt(char* src,char* dest,DES_key_schedule sched) {
+  // Desencriptar texto completo en cadenas de 8 bytes
   for(int i  = 0; i < strlen(src); i += 8) {
     char temp[8] = { src[i], src[i+1], src[i+2], src[i+3],
                      src[i+4], src[i+5], src[i+6], src[i+7] };        
     char temp2[8] = {""};
     DES_ecb_encrypt((const_DES_cblock*)temp,(DES_cblock*)temp2,&sched,DES_DECRYPT);
+    // Agregar resultado al final de la lista dest
     for(int k = 0; k<8; k++) {
       dest[i+k] = temp2[k];
     }
@@ -67,15 +69,18 @@ void decrypt(char* src,char* dest,DES_key_schedule sched) {
 
 // cifa un texto dado una llave
 int encrypt(char* src,char* dest,DES_key_schedule sched) {
+  // Verificar que la cadena tenga longitud multiplo de 8
   if(strlen(src)-1 % 8 == 0) {
     printf("Text does not have a length multiple of 8...\n");
     return 0;
   }
+  // Encriptar el texto completo en pedazos de 8 bytes
   for(int i  = 0; i < strlen(src); i += 8) {
     char temp[8] = { src[i], src[i+1], src[i+2], src[i+3],
                      src[i+4], src[i+5], src[i+6], src[i+7] };        
     char temp2[8] = {""};
     DES_ecb_encrypt((const_DES_cblock*)temp,(DES_cblock*)temp2,&sched,DES_ENCRYPT);
+    // Agregar resultado al final de la lista dest
     for(int k = 0; k<8; k++) {
       dest[i+k] = temp2[k];
     }
@@ -86,18 +91,19 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
 char eltexto[INT_MAX];
 
 // palabra clave a buscar en texto descifrado para determinar si se rompio el codigo
-char search[] = "dolor";
+char search[] = "es una prueba de";
 int tryKey(char* src,DES_key_schedule sched) {
   char temp[strlen(src)];
   decrypt(src,temp,sched);
-  return 1;
-  // return strstr((char *)temp, search) != NULL;
+  return strstr((char *)temp, search) != NULL;
 }
 
 int main(int argc, char *argv[]) {
+  double starttime, endtime;
   int N, id;
   long upper = (1L << 56); 
   long mylower, myupper;
+  starttime = MPI_Wtime();
 
   // Lectura de archivo
   if(ReadFile(eltexto) == 0) {
@@ -168,6 +174,8 @@ int main(int argc, char *argv[]) {
     printf("Texto original: %s\n",eltexto);
     printf("Texto cifrado: %s\n",ciphtext);
     printf("Texto descifrado: %s\n",finaltext);
+    endtime = MPI_Wtime();
+    printf("Tiempo de ejecucion: %lf s\n",endtime-starttime);
   }
   printf("Process %d exiting\n", id);
   // Finalizar entorno MPI
