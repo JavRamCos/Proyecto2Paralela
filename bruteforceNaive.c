@@ -92,9 +92,15 @@ char eltexto[INT_MAX];
 
 // palabra clave a buscar en texto descifrado para determinar si se rompio el codigo
 char search[] = "es una prueba de";
-int tryKey(char* src,DES_key_schedule sched) {
+int tryKey(long num,char* src) {
+  char str[256];
+  sprintf(str,"%ld",num);
+  DES_cblock tempkey;
+  DES_key_schedule tempsched; 
+  DES_string_to_key(str,&tempkey);
+  DES_set_key((const_DES_cblock*)&tempkey,&tempsched); 
   char temp[strlen(src)];
-  decrypt(src,temp,sched);
+  decrypt(src,temp,tempsched);
   return strstr((char *)temp, search) != NULL;
 }
 
@@ -155,7 +161,7 @@ int main(int argc, char *argv[]) {
     if(ready) {
       break; 
     }
-    if(tryKey(ciphtext,sched)) {
+    if(tryKey(i,ciphtext)) {
       found = i;
       printf("Process %d found the key\n", id);
       for (int node = 0; node < N; node++) {
@@ -175,7 +181,7 @@ int main(int argc, char *argv[]) {
     printf("Texto cifrado: %s\n",ciphtext);
     printf("Texto descifrado: %s\n",finaltext);
     endtime = MPI_Wtime();
-    printf("Tiempo de ejecucion: %lf s\n",endtime-starttime);
+    printf("Tiempo de ejecucion: %.3lf s\n",endtime-starttime);
   }
   printf("Process %d exiting\n", id);
   // Finalizar entorno MPI
