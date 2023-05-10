@@ -41,11 +41,7 @@ mpirun -np 4 ./bruteforceBi
 mpirun -np 4 ./bruteForceNaive
 mpirun -np 4 ./bruteforceColas
 ```
-En estos ejemplos, el número 4 indica que se deben usar 4 procesos. Puedes reemplazar este número por la cantidad de procesos que desees utilizar.
-
-
-Por favor, revisa si los nombres de los archivos y los comandos de compilación y ejecución coinciden con tu configuración actual y ajústalos si es necesario.
-
+_En estos ejemplos, el número 4 indica que se deben usar 4 procesos. Puedes reemplazar este número por la cantidad de procesos que desees utilizar._
 
 ### Authors
 
