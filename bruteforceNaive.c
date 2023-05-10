@@ -15,7 +15,7 @@
 #include <time.h>
 #include <openssl/des.h>
 
-#define INFILE "Proyecto2Paralela/input_file.txt"
+#define INFILE "input_file.txt"
 
 // Leer archivo y guardar caracteres
 int ReadFile(char* dest) {
@@ -91,7 +91,7 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
 char eltexto[INT_MAX];
 
 // palabra clave a buscar en texto descifrado para determinar si se rompio el codigo
-char search[] = "es una prueba de";
+char search[] = "Lorem ipsum dolor sit";
 int tryKey(long num,char* src) {
   char str[256];
   sprintf(str,"%ld",num);
