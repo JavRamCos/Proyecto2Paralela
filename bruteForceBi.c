@@ -72,17 +72,33 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
 
 char eltexto[INT_MAX];
 
-char search[] = "Lorem ipsum dolor sit";
-int tryKey(long num,char* src) {
-  char str[256];
-  sprintf(str,"%ld",num);
-  DES_cblock tempkey;
-  DES_key_schedule tempsched; 
-  DES_string_to_key(str,&tempkey);
-  DES_set_key((const_DES_cblock*)&tempkey,&tempsched); 
-  char temp[strlen(src)];
-  decrypt(src,temp,tempsched);
-  return strstr((char *)temp, search) != NULL;
+char search[] = "es una prueba de";
+long tryKeys(long num1,long num2,char* src) {
+  // Primera llave
+  char str1[256];
+  sprintf(str1,"%ld",num1);
+  DES_cblock tempkey1;
+  DES_key_schedule tempsched1; 
+  DES_string_to_key(str1,&tempkey1);
+  DES_set_key((const_DES_cblock*)&tempkey1,&tempsched1); 
+  char temp1[strlen(src)];
+  decrypt(src,temp1,tempsched1);
+  // Segunda llave
+  char str2[256];
+  sprintf(str2,"%ld",num2);
+  DES_cblock tempkey2;
+  DES_key_schedule tempsched2; 
+  DES_string_to_key(str2,&tempkey2);
+  DES_set_key((const_DES_cblock*)&tempkey2,&tempsched2); 
+  char temp2[strlen(src)];
+  decrypt(src,temp2,tempsched2);
+  if(strstr((char *)temp1, search) != NULL) {
+    return num1;
+  } else if(strstr((char *)temp2, search) != NULL) {
+    return num2;
+  } else {
+    return 0;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -99,7 +115,7 @@ int main(int argc, char *argv[]) {
   // char eltexto[] = "TestTestTestTest";
 
   // Generar llave
-  char the_key[] = "123456";
+  char the_key[] = "18014398508481983";
   // 2^56 / 4 es exactamente 18014398509481983
   // long the_key = 18014398509481983L;
   // long the_key = 18014398509481983L + 1L;
@@ -123,26 +139,27 @@ int main(int argc, char *argv[]) {
   long found = 0L;
   int ready = 0;
 
-    // Distribuir trabajo de forma dividida
-  if (id % 2 == 0) {
-    mylower = upper / N * id / 2;
-    myupper = upper / N * (id / 2 + 1) - 1;
-  } else {
-    mylower = upper - upper / N * (id / 2 + 1);
-    myupper = upper - upper / N * id / 2;
+  // Distribuir trabajo de forma naive
+  long range_per_node = upper / N;
+  mylower = range_per_node * id;
+  myupper = range_per_node * (id + 1) - 1;
+  if(id ==N-1) {
+    // Compensar residuo
+    myupper = upper;
   }
   printf("Process %d lower %ld upper %ld\n", id, mylower, myupper);
 
   // Non blocking receive, revisar en el for si alguien ya encontró
   MPI_Irecv(&found, 1, MPI_LONG, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &req);
 
-  for(long i = mylower; i<myupper; i += (id % 2 == 0) ? 1 : -1) {
+  for(long i = 0; i<(myupper-mylower)/2+1; i++) {
     MPI_Test(&req, &ready, MPI_STATUS_IGNORE);
     if(ready) {
       break; 
     }
-    if(tryKey(i,ciphtext)) {
-      found = i;
+    long res = tryKeys(mylower+i,myupper-i,ciphtext);
+    if(res > 0) {
+      found = res;
       printf("Process %d found the key\n", id);
       for (int node = 0; node < N; node++) {
           MPI_Send(&found, 1, MPI_LONG, node, 0, comm); // Avisar a otros
