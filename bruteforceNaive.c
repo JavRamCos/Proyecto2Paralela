@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
   // char eltexto[] = "TestTestTestTest";
 
   // Generar llave
-  char the_key[] = "123456";
+  char the_key[] = "1234567890";
   // 2^56 / 4 es exactamente 18014398509481983
   // long the_key = 18014398509481983L;
   // long the_key = 18014398509481983L + 1L;

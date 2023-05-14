@@ -72,7 +72,7 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
 
 char eltexto[INT_MAX];
 
-char search[] = "es una prueba de";
+char search[] = "Lorem ipsum dolor sit";
 long tryKeys(long num1,long num2,char* src) {
   // Primera llave
   char str1[256];
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   // char eltexto[] = "TestTestTestTest";
 
   // Generar llave
-  char the_key[] = "18014398508481983";
+  char the_key[] = "123456789";
   // 2^56 / 4 es exactamente 18014398509481983
   // long the_key = 18014398509481983L;
   // long the_key = 18014398509481983L + 1L;

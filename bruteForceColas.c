@@ -10,6 +10,7 @@
 #define INFILE "input_file.txt"
 #define TASK_SIZE 1000000L // Tamaño de la tarea que se asignará a cada proceso
 
+
 // Las funciones ReadFile, decrypt, encrypt y tryKey son las mismas que en tu código anterior
 
 char eltexto[INT_MAX];
@@ -64,18 +65,16 @@ int ReadFile(char* dest) {
 }
 
 // descifra un texto dado una llave
-void decrypt(char* src,char* dest,DES_key_schedule sched) {
-  // Desencriptar texto completo en cadenas de 8 bytes
-  for(int i  = 0; i < strlen(src); i += 8) {
-    char temp[8] = { src[i], src[i+1], src[i+2], src[i+3],
-                     src[i+4], src[i+5], src[i+6], src[i+7] };        
+//MEJORA Reutilización de buffer en la función decrypt()
+void decrypt(char* src, char* dest, DES_key_schedule sched) {
+    int len = strlen(src);
+    char temp[8] = {""};
     char temp2[8] = {""};
-    DES_ecb_encrypt((const_DES_cblock*)temp,(DES_cblock*)temp2,&sched,DES_DECRYPT);
-    // Agregar resultado al final de la lista dest
-    for(int k = 0; k<8; k++) {
-      dest[i+k] = temp2[k];
+    for(int i  = 0; i < len; i += 8) {
+        memcpy(temp, &src[i], 8);
+        DES_ecb_encrypt((const_DES_cblock*)temp, (DES_cblock*)temp2, &sched, DES_DECRYPT);
+        memcpy(&dest[i], temp2, 8);
     }
-  }
 }
 
 // cifa un texto dado una llave
@@ -122,7 +121,7 @@ int main(int argc, char *argv[]) {
     // char eltexto[] = "TestTestTestTest";
 
     // Generar llave
-    char the_key[] = "123456";
+    char the_key[] = "1234567890";
     // 2^56 / 4 es exactamente 18014398509481983
     // long the_key = 18014398509481983L;
     // long the_key = 18014398509481983L + 1L;
@@ -139,41 +138,32 @@ int main(int argc, char *argv[]) {
     long found = 0L;
     int ready = 0;
 
-        // Iniciar la recepción no bloqueante, para verificar en el bucle si alguien ya encontró la clave
+    // Iniciar la recepción no bloqueante, para verificar en el bucle si alguien ya encontró la clave
     MPI_Irecv(&found, 1, MPI_LONG, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &req);
 
-    while (next_task < upper) {
-        long mylower = next_task;
-        long myupper = mylower + TASK_SIZE - 1;
-        if (myupper > upper) {
-        myupper = upper;
-        }
-        next_task += TASK_SIZE;
-
-        for(long i = mylower; i<=myupper; ++i) {
-        MPI_Test(&req, &ready, MPI_STATUS_IGNORE);
+    // Fuerza bruta descomposición de dominio
+    for(long i = id; i < upper; i += (long)N) {
+        MPI_Test(&req, &ready, &st);
         if(ready) {
             break; 
         }
-        if(tryKey(i,ciphtext)) {
+        if(tryKey(i, ciphtext)) {
             found = i;
             printf("Process %d found the key\n", id);
             for (int node = 0; node < N; node++) {
-                MPI_Send(&found, 1, MPI_LONG, node, 0, comm); // Avisar a otros
+                MPI_Send(&found, 1, MPI_LONG, node, 0, comm);
             }
             break;
-        }
-        }
-        if (ready) {
-        break;
         }
     }
 
     // Espera y luego imprime el texto
     if(id == 0) {
-        MPI_Wait(&req, &st);
-        DES_key_schedule found_schedule; // Cambiado a DES_key_schedule
-        DES_set_key_unchecked((DES_cblock *)&found, &found_schedule); // Utiliza la clave encontrada (found) en lugar de the_key
+        if (!ready) {
+            MPI_Wait(&req, &st);
+        }
+        DES_key_schedule found_schedule;
+        DES_set_key_unchecked((DES_cblock *)&found, &found_schedule);
         decrypt(ciphtext,finaltext,sched);
         printf("Key = %li\n\n", found);
         printf("Texto original: %s\n",eltexto);
