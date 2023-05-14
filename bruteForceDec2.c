@@ -1,3 +1,14 @@
+/*
+bruteForceDec2.c
+Programa que encripta un texto de longitud MOD(8) e intenta obtener la
+llave correspondiente distribuyendo todas las posibles combinaciones de
+claves entre 4 procesos, con optimizacion en la funcion decrypt que
+reutiliza el buffer.
+- Javier Ramirez Cospin
+- Cesar Vinicio Alvarado Rodas
+- Andres Emilio Quinto Villagran
+*/
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,28 +19,17 @@
 #include <openssl/des.h>
 
 #define INFILE "input_file.txt"
-#define TASK_SIZE 1000000L // Tamaño de la tarea que se asignará a cada proceso
-
-
-// Las funciones ReadFile, decrypt, encrypt y tryKey son las mismas que en tu código anterior
 
 char eltexto[INT_MAX];
 
-// palabra clave a buscar en texto descifrado para determinar si se rompio el codigo
-char search[] = "Lorem ipsum dolor sit";
-int tryKey(long num,char* src) {
-  char str[256];
-  sprintf(str,"%ld",num);
-  DES_cblock tempkey;
-  DES_key_schedule tempsched; 
-  DES_string_to_key(str,&tempkey);
-  DES_set_key((const_DES_cblock*)&tempkey,&tempsched); 
-  char temp[strlen(src)];
-  decrypt(src,temp,tempsched);
-  return strstr((char *)temp, search) != NULL;
-}
-
-// Leer archivo y guardar caracteres
+/*
+Funcion para leer un archivo de texto (INFILE) y guardar sus caracteres
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres del archivo de texto.
+ERRORES:  - Error al leer el archivo
+          - Error alojando memoria para guardar caracteres
+          - Error leyendo caracteres del archivo
+*/
 int ReadFile(char* dest) {
   FILE* file;
   long size;
@@ -64,8 +64,16 @@ int ReadFile(char* dest) {
   return 1;
 }
 
-// descifra un texto dado una llave
-//MEJORA Reutilización de buffer en la función decrypt()
+/*
+Funcion para descifrar un texto cifrado con una llave con optimizacion de memoria
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se descifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres descifrados de la lista con caracteres
+                cifrados.
+*/
 void decrypt(char* src, char* dest, DES_key_schedule sched) {
     int len = strlen(src);
     char temp[8] = {""};
@@ -77,7 +85,16 @@ void decrypt(char* src, char* dest, DES_key_schedule sched) {
     }
 }
 
-// cifa un texto dado una llave
+/*
+Funcion para cifrar un texto no cifrado con una llave
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres no cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se cifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres cifrados de la lista con caracteres no
+                cifrados.
+*/
 int encrypt(char* src,char* dest,DES_key_schedule sched) {
   // Verificar que la cadena tenga longitud multiplo de 8
   if(strlen(src)-1 % 8 == 0) {
@@ -98,6 +115,28 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
   return 1;
 }
 
+/*
+Funcion para descifrar un texto cifrado con una llave
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se descifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres descifrados de la lista con caracteres
+                cifrados.
+*/
+char search[] = "es una prueba de";
+int tryKey(long num,char* src) {
+  char str[256];
+  sprintf(str,"%ld",num);
+  DES_cblock tempkey;
+  DES_key_schedule tempsched; 
+  DES_string_to_key(str,&tempkey);
+  DES_set_key((const_DES_cblock*)&tempkey,&tempsched); 
+  char temp[strlen(src)];
+  decrypt(src,temp,tempsched);
+  return strstr((char *)temp, search) != NULL;
+}
 
 int main(int argc, char *argv[]) {
     double starttime, endtime;
@@ -121,7 +160,7 @@ int main(int argc, char *argv[]) {
     // char eltexto[] = "TestTestTestTest";
 
     // Generar llave
-    char the_key[] = "1234567890";
+    char the_key[] = "123456";
     // 2^56 / 4 es exactamente 18014398509481983
     // long the_key = 18014398509481983L;
     // long the_key = 18014398509481983L + 1L;

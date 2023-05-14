@@ -1,10 +1,12 @@
-//bruteforceNaive.c
-//Tambien cifra un texto cualquiera con un key arbitrario.
-//OJO: asegurarse que la palabra a buscar sea lo suficientemente grande
-//  evitando falsas soluciones ya que sera muy improbable que tal palabra suceda de
-//  forma pseudoaleatoria en el descifrado.
-//>> mpicc bruteforceNaive.c -o desBrute -lcrypto
-//>> mpirun -np <N> desBrute
+/*
+bruteforceNaive.c
+Programa que encripta un texto de longitud MOD(8) e intenta obtener la
+llave correspondiente distribuyendo todas las posibles combinaciones de
+claves entre 4 procesos de manera ingenua.
+- Javier Ramirez Cospin
+- Cesar Vinicio Alvarado Rodas
+- Andres Emilio Quinto Villagran
+*/
 
 #include <string.h>
 #include <stdio.h>
@@ -17,7 +19,14 @@
 
 #define INFILE "input_file.txt"
 
-// Leer archivo y guardar caracteres
+/*
+Funcion para leer un archivo de texto (INFILE) y guardar sus caracteres
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres del archivo de texto.
+ERRORES:  - Error al leer el archivo
+          - Error alojando memoria para guardar caracteres
+          - Error leyendo caracteres del archivo
+*/
 int ReadFile(char* dest) {
   FILE* file;
   long size;
@@ -52,7 +61,16 @@ int ReadFile(char* dest) {
   return 1;
 }
 
-// descifra un texto dado una llave
+/*
+Funcion para descifrar un texto cifrado con una llave
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se descifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres descifrados de la lista con caracteres
+                cifrados.
+*/
 void decrypt(char* src,char* dest,DES_key_schedule sched) {
   // Desencriptar texto completo en cadenas de 8 bytes
   for(int i  = 0; i < strlen(src); i += 8) {
@@ -67,7 +85,16 @@ void decrypt(char* src,char* dest,DES_key_schedule sched) {
   }
 }
 
-// cifa un texto dado una llave
+/*
+Funcion para cifrar un texto no cifrado con una llave
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres no cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se cifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres cifrados de la lista con caracteres no
+                cifrados.
+*/
 int encrypt(char* src,char* dest,DES_key_schedule sched) {
   // Verificar que la cadena tenga longitud multiplo de 8
   if(strlen(src)-1 % 8 == 0) {
@@ -90,8 +117,15 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
 
 char eltexto[INT_MAX];
 
-// palabra clave a buscar en texto descifrado para determinar si se rompio el codigo
-char search[] = "Lorem ipsum dolor sit";
+/*
+Funcion para intentar descifrar un texto con la llave correcta
+IN        num: numero tipo (long) con la que se descifra el texto cifrado.
+          src: puntero de tipo (char), en donde se encuentran los caracteres
+               cifrados.
+OUT       - int: 1 en caso que el substring se encuentre en la cadena
+                 descifrada y 0 en caso contrario.
+*/
+char search[] = "es una prueba de";
 int tryKey(long num,char* src) {
   char str[256];
   sprintf(str,"%ld",num);
@@ -118,7 +152,7 @@ int main(int argc, char *argv[]) {
   // char eltexto[] = "TestTestTestTest";
 
   // Generar llave
-  char the_key[] = "1234567890";
+  char the_key[] = "123456";
   // 2^56 / 4 es exactamente 18014398509481983
   // long the_key = 18014398509481983L;
   // long the_key = 18014398509481983L + 1L;

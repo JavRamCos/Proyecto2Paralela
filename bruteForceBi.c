@@ -1,3 +1,13 @@
+/*
+bruteForceBi.c
+Programa que encripta un texto de longitud MOD(8) e intenta obtener la
+llave correspondiente distribuyendo todas las posibles combinaciones de
+claves entre 4 procesos e iterando dos pares de claves a la vez.
+- Javier Ramirez Cospin
+- Cesar Vinicio Alvarado Rodas
+- Andres Emilio Quinto Villagran
+*/
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,8 +18,15 @@
 #include <openssl/des.h>
 
 #define INFILE "input_file.txt"
-// ... mantenemos las funciones ReadFile, decrypt, encrypt y tryKey
 
+/*
+Funcion para leer un archivo de texto (INFILE) y guardar sus caracteres
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres del archivo de texto.
+ERRORES:  - Error al leer el archivo
+          - Error alojando memoria para guardar caracteres
+          - Error leyendo caracteres del archivo
+*/
 int ReadFile(char* dest) {
   FILE* file;
   long size;
@@ -40,6 +57,16 @@ int ReadFile(char* dest) {
   return 1;
 }
 
+/*
+Funcion para descifrar un texto cifrado con una llave
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se descifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres descifrados de la lista con caracteres
+                cifrados.
+*/
 void decrypt(char* src,char* dest,DES_key_schedule sched) {
   for(int i  = 0; i < strlen(src); i += 8) {
     char temp[8] = { src[i], src[i+1], src[i+2], src[i+3],
@@ -52,12 +79,21 @@ void decrypt(char* src,char* dest,DES_key_schedule sched) {
   }
 }
 
+/*
+Funcion para cifrar un texto no cifrado con una llave
+IN        src: puntero de tipo (char), en donde se encuentran todos
+               los caracteres no cifrados.
+          sched: llave convertida a tipo (DES_key_schedule) con la
+                 que se cifra el texto.
+OUT       dest: puntero de tipo (char), en donde se copian todos los
+                caracteres cifrados de la lista con caracteres no
+                cifrados.
+*/
 int encrypt(char* src,char* dest,DES_key_schedule sched) {
   if(strlen(src)-1 % 8 == 0) {
     printf("Text does not have a length multiple of 8...\n");
     return 0;
   }
-
   for(int i  = 0; i < strlen(src); i += 8) {
     char temp[8] = { src[i], src[i+1], src[i+2], src[i+3],
                       src[i+4], src[i+5], src[i+6], src[i+7] };        
@@ -72,7 +108,16 @@ int encrypt(char* src,char* dest,DES_key_schedule sched) {
 
 char eltexto[INT_MAX];
 
-char search[] = "Lorem ipsum dolor sit";
+/*
+Funcion para intentar descifrar un texto con un par de llaves
+IN        num1: numero 1 tipo (long) con la que se descifra el texto cifrado.
+          num2: numero 2 tipo (long) con la que se descifra el texto cifrado.
+          src: puntero de tipo (char), en donde se encuentran los caracteres
+               cifrados.
+OUT       - int: 1 en caso que el substring se encuentre en la cadena
+                 descifrada y 0 en caso contrario.
+*/
+char search[] = "es una prueba de";
 long tryKeys(long num1,long num2,char* src) {
   // Primera llave
   char str1[256];
@@ -115,7 +160,7 @@ int main(int argc, char *argv[]) {
   // char eltexto[] = "TestTestTestTest";
 
   // Generar llave
-  char the_key[] = "123456789";
+  char the_key[] = "123456";
   // 2^56 / 4 es exactamente 18014398509481983
   // long the_key = 18014398509481983L;
   // long the_key = 18014398509481983L + 1L;
