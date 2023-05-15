@@ -16,9 +16,11 @@ Este proyecto explora tres enfoques diferentes para romper el cifrado DES utiliz
 
 La versión naive divide el espacio de búsqueda de claves por igual entre los procesos disponibles. Cada proceso busca a través de su sección de claves asignada de manera secuencial hasta que se encuentra la clave correcta.
 
-## Versión con Colas
+## Versión con descomposición de dominio (bruteForceDec2)
 
-La versión con colas utiliza una estrategia de asignación dinámica de tareas. Cuando un proceso termina de buscar a través de su sección de claves asignada, solicita una nueva sección de claves al proceso maestro. Esto puede resultar en una distribución más equilibrada de la carga de trabajo, especialmente si el tiempo requerido para buscar a través de una sección de claves varía.
+La descomposición de dominio es una técnica comúnmente utilizada en computación distribuida para dividir un problema en subproblemas más pequeños que pueden ser resueltos de forma independiente. En el contexto de este algoritmo de descifrado de texto, la descomposición de dominio se utiliza para distribuir la búsqueda de la clave entre múltiples procesos en paralelo.
+
+El algoritmo divide la búsqueda de la clave en múltiples procesos utilizando la técnica de descomposición de dominio. Cada proceso MPI prueba un conjunto único de claves en orden secuencial utilizando el cifrado y descifrado DES. Si un proceso encuentra la clave correcta, envía un mensaje a los demás procesos para detener la búsqueda. Al final, se imprime el resultado y se muestra el texto descifrado. Esto permite acelerar la búsqueda de la clave utilizando la capacidad de procesamiento paralelo de múltiples procesos.
 
 ## Versión con Búsqueda Bidireccional
 
@@ -29,7 +31,7 @@ La versión con búsqueda bidireccional implementa una estrategia de búsqueda d
 Para compilar cualquiera de los programas, puedes usar el compilador de MPI. Aquí te dejo un ejemplo de cómo hacerlo:
 
 ```bash
-mpicc bruteForceBi.c -o bruteforceBi -lcrypto -lssl
+mpicc bruteForceDec2.c -o bruteForceDec2 -lcrypto -lssl
 mpicc bruteforceNaive.c -o bruteForceNaive -lcrypto -lssl
 mpicc bruteForceColas.c -o bruteforceColas -lcrypto -lssl
 ```
@@ -37,7 +39,7 @@ mpicc bruteForceColas.c -o bruteforceColas -lcrypto -lssl
 Para ejecutarlos:
 
 ```bash
-mpirun -np 4 ./bruteforceBi
+mpirun -np 4 ./bruteForceDec2
 mpirun -np 4 ./bruteForceNaive
 mpirun -np 4 ./bruteforceColas
 ```
